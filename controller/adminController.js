@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler")
 const response = require("../middleware/responseMiddlewares")
 const AdminDB = require("../model/adminModel")
+const AdminSettings = require("../model/adminSettingsModel");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -53,6 +54,28 @@ module.exports.loginAdmin = asyncHandler(async (req, res) => {
     });
 
     response.successResponse(res, { token }, "Admin logged in successfully");
+});
+
+
+
+module.exports.updateAdminSettings = asyncHandler(async (req, res) => {
+    try {
+        const { maxWishlistsPerUser, maxItemsPerWishlist } = req.body;
+        if(!maxWishlistsPerUser || !maxItemsPerWishlist){
+            return response.validationError(res, "All Field Required.")
+        }
+        let settings = await AdminSettings.findOne();
+        if (!settings) {
+            settings = new AdminSettings();
+        }
+        settings.maxWishlistsPerUser = maxWishlistsPerUser;
+        settings.maxItemsPerWishlist = maxItemsPerWishlist;
+        await settings.save();
+
+        response.successResponse(res, settings, "Admin settings updated successfully");
+    } catch (error) {
+        response.internalServerError(res, error.message);
+    }
 });
 
 

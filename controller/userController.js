@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require("express-async-handler")
 const response = require("../middleware/responseMiddlewares")
 const userDB = require("../model/userModel")
+const otpDB = require("../model/otpModel")
 const { generateOtp } = require("../utils/helper")
 const { towfectorsendOtp } = require("../utils/2factor")
 
@@ -33,10 +34,21 @@ module.exports.createUser = asyncHandler(async (req, res) => {
         // Create new user with OTP
         user = await userDB.create({
             mobile,
-            otp,
+            // otp,
             isVerify: false
         });
 
+        let otpEntry = await otpDB.findOne({ userId: user._id });
+        if (otpEntry) {
+            otpEntry.otp = otp;
+            otpEntry.createdAt = Date.now();
+            await otpEntry.save();
+        } else {
+            await otpDB.create({
+                userId: user._id,
+                otp
+            });
+        }
         response.successResponse(res, user, "User created successfully, OTP sent");
     } catch (error) {
         response.internalServerError(res, error.message)
@@ -54,14 +66,16 @@ module.exports.verifyUser = asyncHandler(async (req, res) => {
             return response.validationError(res, "User not found");
         }
 
-        // Verify OTP
-        if (user.otp !== otp) {
-            return response.validationError(res, "Invalid OTP");
+        const otpEntry = await otpDB.findOne({ userId: user._id, otp });
+        if (!otpEntry) {
+            return response.validationError(res, "Invalid or expired OTP");
         }
+
+        // OTP is valid, delete OTP entry
+        await otpDB.deleteOne({ _id: otpEntry._id });
 
         // Update user as verified
         user.isVerify = true;
-        user.otp = null;
         await user.save();
 
         response.successResponse(res, user, "User verified successfully");
@@ -88,8 +102,20 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
             return response.internalServerError(res, "Error while send the otp.")
         }
 
+        let otpEntry = await otpDB.findOne({ userId: user._id });
+        if (otpEntry) {
+            otpEntry.otp = otp;
+            otpEntry.createdAt = Date.now();
+            await otpEntry.save();
+        } else {
+            await otpDB.create({
+                userId: user._id,
+                otp
+            });
+        }
+
         // Update user with the new OTP
-        user.otp = otp;
+        // user.otp = otp;
         await user.save();
 
         response.successResponse(res, { mobile }, "OTP sent to mobile number");
@@ -108,11 +134,14 @@ module.exports.verifyLoginOtp = asyncHandler(async (req, res) => {
         if (!user) {
             return response.validationError(res, "User not found");
         }
-
-        // Verify OTP
-        if (user.otp !== otp) {
-            return response.validationError(res, "Invalid OTP");
+        
+        const otpEntry = await otpDB.findOne({ userId: user._id, otp });
+        if (!otpEntry) {
+            return response.validationError(res, "Invalid or expired OTP");
         }
+
+        // OTP is valid, delete OTP entry
+        await otpDB.deleteOne({ _id: otpEntry._id });
 
         // Generate token
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
