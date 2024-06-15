@@ -2,7 +2,7 @@ const express = require("express")
 const http = require('http');
 const cors = require("cors")
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser"); 
+const cookieParser = require("cookie-parser");
 require('dotenv').config();
 const { connectDB } = require('./db/connect');
 
@@ -19,8 +19,11 @@ const server = http.createServer(app);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.json({ limit: "50mb" }));
-app.use(cors());
-app.use(cookieParser()); 
+app.use(cors({
+    origin: true, // Allow all origins
+    credentials: true // Allow credentials
+}));
+app.use(cookieParser());
 
 
 app.get("/", (req, res) => {
