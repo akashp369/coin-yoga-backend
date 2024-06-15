@@ -10,9 +10,12 @@ const { towfectorsendOtp } = require("../utils/2factor")
 // Create User with Mobile and OTP
 module.exports.createUser = asyncHandler(async (req, res) => {
     try {
-        const { mobile } = req.body;
-
-        // Check if user already exists with the same mobile number
+        const { mobile, firstName, lastName, email, dob  } = req.body;
+        
+        if(!mobile || !firstName || !lastName){
+            return response.validationError(res, "All Field Required.")
+        }
+       
         let user = await userDB.findOne({ mobile });
 
         if (user) {
@@ -33,7 +36,11 @@ module.exports.createUser = asyncHandler(async (req, res) => {
 
         // Create new user with OTP
         user = await userDB.create({
-            mobile,
+            mobile, 
+            firstName, 
+            lastName,
+            email, 
+            dob,
             // otp,
             isVerify: false
         });
