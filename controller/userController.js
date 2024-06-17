@@ -5,7 +5,8 @@ const response = require("../middleware/responseMiddlewares")
 const userDB = require("../model/userModel")
 const otpDB = require("../model/otpModel")
 const { generateOtp } = require("../utils/helper")
-const { towfectorsendOtp } = require("../utils/2factor")
+const { towfectorsendOtp } = require("../utils/2factor");
+const { uploadOnCloudinary } = require('../middleware/Cloudinary');
 
 // Create User with Mobile and OTP
 module.exports.createUser = asyncHandler(async (req, res) => {
@@ -195,3 +196,70 @@ module.exports.getUserBytoken = asyncHandler(async (req, res) => {
         response.internalServerError(res, error.message)
     }
 })
+
+
+module.exports.uploadPicture = asyncHandler(async(req, res)=>{
+    try {
+        const userId = req.userId
+        const findUser = await userDB.findById(userId)
+        if(!findUser){
+            return response.notFoundError(res, "User not found.")
+        }
+        if(!req.file){
+            return response.validationError(res, "Profile pic not found.")
+        }
+        const upload = await uploadOnCloudinary(req.file)
+        if(upload){
+            findUser.profilePicture=upload
+        }
+        await findUser.save()
+        // console.log(req.file);
+        response.successResponse(res, findUser,"Profile pic update done.")
+    } catch (error) {
+        response.internalServerError(res, error.message)
+    }
+})
+
+module.exports.uploadCoverPicture = asyncHandler(async(req, res)=>{
+    try {
+        const userId = req.userId
+        const findUser = await userDB.findById(userId)
+        if(!findUser){
+            return response.notFoundError(res, "User not found.")
+        }
+        if(!req.file){
+            return response.validationError(res, "Profile pic not found.")
+        }
+        const upload = await uploadOnCloudinary(req.file)
+        if(upload){
+            findUser.coverPhoto=upload
+        }
+        await findUser.save()
+        // console.log(req.file);
+        response.successResponse(res, findUser,"Profile pic update done.")
+    } catch (error) {
+        response.internalServerError(res, error.message)
+    }
+})
+
+// Update User with all fields
+module.exports.updateUser = asyncHandler(async (req, res) => {
+    try {
+        const userId = req.userId;
+        const updateData = req.body;
+        delete updateData.profilePicture
+        delete updateData.coverPhoto
+        delete updateData.username
+        delete updateData.email
+        delete updateData.phoneNumber
+        const updatedUser = await userDB.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
+
+        if (!updatedUser) {
+            return response.notFoundError(res, "User not found.");
+        }
+
+        response.successResponse(res, updatedUser, "User updated successfully.");
+    } catch (error) {
+        response.internalServerError(res, error.message);
+    }
+});
