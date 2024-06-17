@@ -10,12 +10,12 @@ const { towfectorsendOtp } = require("../utils/2factor")
 // Create User with Mobile and OTP
 module.exports.createUser = asyncHandler(async (req, res) => {
     try {
-        const { mobile, firstName, lastName, email, dob  } = req.body;
-        
-        if(!mobile || !firstName || !lastName){
+        const { mobile, firstName, lastName, email, dob } = req.body;
+
+        if (!mobile || !firstName || !lastName) {
             return response.validationError(res, "All Field Required.")
         }
-       
+
         let user = await userDB.findOne({ mobile });
 
         if (user) {
@@ -36,10 +36,10 @@ module.exports.createUser = asyncHandler(async (req, res) => {
 
         // Create new user with OTP
         user = await userDB.create({
-            mobile, 
-            firstName, 
+            mobile,
+            firstName,
             lastName,
-            email, 
+            email,
             dob,
             // otp,
             isVerify: false
@@ -141,7 +141,7 @@ module.exports.verifyLoginOtp = asyncHandler(async (req, res) => {
         if (!user) {
             return response.validationError(res, "User not found");
         }
-        
+
         const otpEntry = await otpDB.findOne({ userId: user._id, otp });
         if (!otpEntry) {
             return response.validationError(res, "Invalid or expired OTP");
@@ -157,7 +157,8 @@ module.exports.verifyLoginOtp = asyncHandler(async (req, res) => {
         res.cookie('userToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000
+            sameSite: 'lax', // or 'strict'
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
 
         // Clear OTP after successful verification
@@ -169,3 +170,28 @@ module.exports.verifyLoginOtp = asyncHandler(async (req, res) => {
         response.internalServerError(res, error.message)
     }
 });
+
+
+module.exports.hangleLogout = asyncHandler(async (req, res) => {
+    res.cookie('userToken', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: new Date(0) // Set the expiration date to the past
+    });
+    res.status(200).send({ message: 'Logged out' });
+})
+
+
+module.exports.getUserBytoken = asyncHandler(async (req, res) => {
+    try {
+        const userId = req.userId
+        const findUser = await userDB.findById(userId)
+        if (!findUser) {
+            return response.notFoundError(res, "User Not found.")
+        }
+        response.successResponse(res, findUser, "User Data is here.")
+    } catch (error) {
+        response.internalServerError(res, error.message)
+    }
+})
