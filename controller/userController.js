@@ -157,8 +157,8 @@ module.exports.verifyLoginOtp = asyncHandler(async (req, res) => {
         // Set token in cookie
         res.cookie('userToken', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax', // or 'strict'
+            secure: process.env.NODE_ENV === 'production' ? true : false,
+            sameSite: 'None', // or 'strict'
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
 
