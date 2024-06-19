@@ -49,7 +49,8 @@ module.exports.loginAdmin = asyncHandler(async (req, res) => {
     // Set token in cookie
     res.cookie('adminToken', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        sameSite: 'None', // or 'strict'
         maxAge: 24 * 60 * 60 * 1000
     });
 
@@ -61,7 +62,7 @@ module.exports.loginAdmin = asyncHandler(async (req, res) => {
 module.exports.updateAdminSettings = asyncHandler(async (req, res) => {
     try {
         const { maxWishlistsPerUser, maxItemsPerWishlist } = req.body;
-        if(!maxWishlistsPerUser || !maxItemsPerWishlist){
+        if (!maxWishlistsPerUser || !maxItemsPerWishlist) {
             return response.validationError(res, "All Field Required.")
         }
         let settings = await AdminSettings.findOne();
