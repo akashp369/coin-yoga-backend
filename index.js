@@ -10,6 +10,7 @@ const { connectDB } = require('./db/connect');
 const adminRoute = require("./routes/adminRoute")
 const userRoute = require("./routes/userRoute")
 const wishlistRoute = require("./routes/wishlistRoute")
+const paperTradingRoute = require("./routes/paperTradingRoute")
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
 app.use("/api/admin", adminRoute)
 app.use("/api/user", userRoute)
 app.use("/api/wishlist", wishlistRoute)
+app.use("/api/paper/order", paperTradingRoute)
 
 
 
