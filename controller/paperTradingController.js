@@ -5,7 +5,7 @@ const Order = require("../model/paperOrderModel");
 
 module.exports.createOrder = asyncHandler(async (req, res) => {
     try {
-        const { orderType, cryptoSymbol, amount, price, status } = req.body;
+        const { orderType, cryptoSymbol, amount, price, status, qty } = req.body;
         const userId =  req.userId
         const newOrder = await Order.create({
             userId,
@@ -13,7 +13,8 @@ module.exports.createOrder = asyncHandler(async (req, res) => {
             cryptoSymbol,
             amount,
             price,
-            status
+            status, 
+            qty
         });
 
         response.successResponse(res, newOrder, "Order created successfully");
@@ -27,7 +28,7 @@ module.exports.updateOrder = asyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
         const userId =  req.userId
-        const { orderType, cryptoSymbol, amount, price, status } = req.body;
+        const { orderType, cryptoSymbol, amount, price, status, qty } = req.body;
 
         const updatedOrder = await Order.findByIdAndUpdate(id, {
             userId,
@@ -35,7 +36,8 @@ module.exports.updateOrder = asyncHandler(async (req, res) => {
             cryptoSymbol,
             amount,
             price,
-            status
+            status, 
+            qty
         }, { new: true });
 
         if (!updatedOrder) {

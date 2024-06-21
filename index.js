@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 app.use("/api/admin", adminRoute)
 app.use("/api/user", userRoute)
 app.use("/api/wishlist", wishlistRoute)
-app.use("/api/paper/order", paperTradingRoute)
+app.use("/api/paper", paperTradingRoute)
 
 
 
