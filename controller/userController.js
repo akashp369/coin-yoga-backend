@@ -8,6 +8,8 @@ const { generateOtp } = require("../utils/helper")
 const { towfectorsendOtp } = require("../utils/2factor");
 const { uploadOnCloudinary } = require('../middleware/Cloudinary');
 
+const generateRandomNumber = () => Math.floor(10000 + Math.random() * 90000);
+
 // Create User with Mobile and OTP
 module.exports.createUser = asyncHandler(async (req, res) => {
     try {
@@ -35,6 +37,15 @@ module.exports.createUser = asyncHandler(async (req, res) => {
             return response.internalServerError(res, "Error while send the otp.")
         }
 
+        let username = `${firstName.substring(0, 2)}${lastName.substring(0, 2)}${generateRandomNumber()}`;
+
+        // Check if the username already exists in the database
+        let existingUser = await userDB.findOne({ username });
+        while (existingUser) {
+            username = `${firstName.substring(0, 2)}${lastName.substring(0, 2)}${generateRandomNumber()}`;
+            existingUser = await userDB.findOne({ username });
+        }
+
         // Create new user with OTP
         user = await userDB.create({
             mobile,
@@ -42,6 +53,7 @@ module.exports.createUser = asyncHandler(async (req, res) => {
             lastName,
             email,
             dob,
+            username,
             // otp,
             isVerify: false
         });
@@ -198,45 +210,45 @@ module.exports.getUserBytoken = asyncHandler(async (req, res) => {
 })
 
 
-module.exports.uploadPicture = asyncHandler(async(req, res)=>{
+module.exports.uploadPicture = asyncHandler(async (req, res) => {
     try {
         const userId = req.userId
         const findUser = await userDB.findById(userId)
-        if(!findUser){
+        if (!findUser) {
             return response.notFoundError(res, "User not found.")
         }
-        if(!req.file){
+        if (!req.file) {
             return response.validationError(res, "Profile pic not found.")
         }
         const upload = await uploadOnCloudinary(req.file)
-        if(upload){
-            findUser.profilePicture=upload
+        if (upload) {
+            findUser.profilePicture = upload
         }
         await findUser.save()
         // console.log(req.file);
-        response.successResponse(res, findUser,"Profile pic update done.")
+        response.successResponse(res, findUser, "Profile pic update done.")
     } catch (error) {
         response.internalServerError(res, error.message)
     }
 })
 
-module.exports.uploadCoverPicture = asyncHandler(async(req, res)=>{
+module.exports.uploadCoverPicture = asyncHandler(async (req, res) => {
     try {
         const userId = req.userId
         const findUser = await userDB.findById(userId)
-        if(!findUser){
+        if (!findUser) {
             return response.notFoundError(res, "User not found.")
         }
-        if(!req.file){
+        if (!req.file) {
             return response.validationError(res, "Profile pic not found.")
         }
         const upload = await uploadOnCloudinary(req.file)
-        if(upload){
-            findUser.coverPhoto=upload
+        if (upload) {
+            findUser.coverPhoto = upload
         }
         await findUser.save()
         // console.log(req.file);
-        response.successResponse(res, findUser,"Profile pic update done.")
+        response.successResponse(res, findUser, "Profile pic update done.")
     } catch (error) {
         response.internalServerError(res, error.message)
     }
@@ -267,21 +279,31 @@ module.exports.updateUser = asyncHandler(async (req, res) => {
 module.exports.googleLogin = asyncHandler(async (req, res) => {
     try {
         const { name, email, picture } = req.body;
-        
+
         // Split the name into first and last names
         const [firstName, ...lastNameParts] = name.split(' ');
         const lastName = lastNameParts.join(' ');
 
         // Check if the user exists
         let user = await userDB.findOne({ email });
-        
+
         if (!user) {
             // If user does not exist, create a new user
+            let username = `${firstName.substring(0, 2)}${lastName.substring(0, 2)}${generateRandomNumber()}`;
+
+            let existingUser = await userDB.findOne({ username });
+            while (existingUser) {
+                username = `${firstName.substring(0, 2)}${lastName.substring(0, 2)}${generateRandomNumber()}`;
+                existingUser = await userDB.findOne({ username });
+            }
+
             user = await userDB.create({
                 firstName,
                 lastName,
                 email,
                 profilePicture: picture,
+                username: username,
+                isVerify: true
             });
         }
 
