@@ -263,3 +263,41 @@ module.exports.updateUser = asyncHandler(async (req, res) => {
         response.internalServerError(res, error.message);
     }
 });
+
+module.exports.googleLogin = asyncHandler(async (req, res) => {
+    try {
+        const { name, email, picture } = req.body;
+        
+        // Split the name into first and last names
+        const [firstName, ...lastNameParts] = name.split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        // Check if the user exists
+        let user = await userDB.findOne({ email });
+        
+        if (!user) {
+            // If user does not exist, create a new user
+            user = await userDB.create({
+                firstName,
+                lastName,
+                email,
+                profilePicture: picture,
+            });
+        }
+
+        // Generate token
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        // Set token in cookie
+        res.cookie('userToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production' ? true : false,
+            sameSite: 'None', // or 'strict'
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
+
+        response.successResponse(res, { token }, "User logged in successfully");
+    } catch (error) {
+        response.internalServerError(res, error.message);
+    }
+});

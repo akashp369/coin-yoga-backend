@@ -12,5 +12,6 @@ router.get("/single", checkUser, user.getUserBytoken)
 router.put("/profilepic", checkUser, upload.single("pic"), user.uploadPicture)
 router.put("/coverpic", checkUser, upload.single("pic"), user.uploadCoverPicture)
 router.put("/update", checkUser,  user.updateUser)
+router.post("/google/login", user.googleLogin)
 
 module.exports = router;
