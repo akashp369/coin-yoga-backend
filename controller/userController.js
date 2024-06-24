@@ -7,15 +7,16 @@ const otpDB = require("../model/otpModel")
 const { generateOtp } = require("../utils/helper")
 const { towfectorsendOtp } = require("../utils/2factor");
 const { uploadOnCloudinary } = require('../middleware/Cloudinary');
+const { sendMailByNodemailer } = require("../utils/nodemailer")
 
 const generateRandomNumber = () => Math.floor(10000 + Math.random() * 90000);
 
 // Create User with Mobile and OTP
 module.exports.createUser = asyncHandler(async (req, res) => {
     try {
-        const { mobile, firstName, lastName, email, dob } = req.body;
+        const { mobile, firstName, lastName, email, dob, country, countryCode } = req.body;
 
-        if (!mobile || !firstName || !lastName) {
+        if (!mobile || !firstName || !lastName || !countryCode) {
             return response.validationError(res, "All Field Required.")
         }
 
@@ -32,7 +33,9 @@ module.exports.createUser = asyncHandler(async (req, res) => {
 
         // Generate and send OTP
         const otp = Math.floor(100000 + Math.random() * 900000);
-        const sendotp = await towfectorsendOtp(mobile, otp);
+        let updatemob = `+${countryCode}${mobile}`
+        console.log(updatemob);
+        const sendotp = await towfectorsendOtp(updatemob, otp);
         if (!sendotp) {
             return response.internalServerError(res, "Error while send the otp.")
         }
@@ -55,7 +58,9 @@ module.exports.createUser = asyncHandler(async (req, res) => {
             dob,
             username,
             // otp,
-            isVerify: false
+            isVerify: false,
+            country,
+            countryCode
         });
 
         let otpEntry = await otpDB.findOne({ userId: user._id });
@@ -116,8 +121,11 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
         }
 
         // Generate and send OTP
+        const { countryCode } = user
+        let updatemob = `+${countryCode}${mobile}`
+        console.log(updatemob);
         const otp = Math.floor(100000 + Math.random() * 900000);
-        const sendotp = await towfectorsendOtp(mobile, otp);
+        const sendotp = await towfectorsendOtp(updatemob, otp);
         if (!sendotp) {
             return response.internalServerError(res, "Error while send the otp.")
         }
@@ -323,3 +331,157 @@ module.exports.googleLogin = asyncHandler(async (req, res) => {
         response.internalServerError(res, error.message);
     }
 });
+
+
+module.exports.sendEmailOtp = asyncHandler(async (req, res) => {
+    try {
+      const { email } = req.body;
+      const userId = req.userId;
+  
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+  
+      // Check if user exists
+      const user = await userDB.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Generate and send OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+      const send = await sendMailByNodemailer(email, otp);
+      if(!send){
+        return response.validationError(res, "Error while send otp")
+      }
+      // Save OTP to database
+      let otpEntry = await otpDB.findOne({ userId });
+      if (otpEntry) {
+        otpEntry.otp = otp;
+        otpEntry.createdAt = Date.now();
+        await otpEntry.save();
+      } else {
+        await otpDB.create({ userId, otp });
+      }
+  
+      response.successResponse(res, null, "OTP sent to email")
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+
+  module.exports.verifyEmailOtp = asyncHandler(async (req, res) => {
+    try {
+      const { email, otp } = req.body;
+      const userId = req.userId;
+  
+      if (!email || !otp) {
+        return res.status(400).json({ message: 'Email and OTP are required' });
+      }
+  
+      // Check if user exists
+      const user = await userDB.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Verify OTP
+      const otpEntry = await otpDB.findOne({ userId, otp });
+      if (!otpEntry) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
+      }
+  
+      // OTP is valid, delete OTP entry
+      await otpDB.deleteOne({ _id: otpEntry._id });
+  
+      // Update user's email
+      user.email = email;
+      await user.save();
+  
+      response.successResponse(res, user, "Email updated successfully")
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+
+  module.exports.sendPhoneOtp = asyncHandler(async (req, res) => {
+    try {
+      const { countryCode, mobile } = req.body;
+      const userId = req.userId;
+  
+      if (!countryCode || !mobile) {
+        return res.status(400).json({ message: 'Country code and mobile number are required' });
+      }
+  
+      // Check if user exists
+      const user = await userDB.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Generate and send OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const updatemob = `+${countryCode}${mobile}`;
+  
+      const send = await towfectorsendOtp(updatemob, otp);
+      if (!send) {
+        return response.validationError(res, "Error while sending OTP");
+      }
+  
+      // Save OTP to database
+      let otpEntry = await otpDB.findOne({ userId });
+      if (otpEntry) {
+        otpEntry.otp = otp;
+        otpEntry.createdAt = Date.now();
+        await otpEntry.save();
+      } else {
+        await otpDB.create({ userId, otp });
+      }
+  
+      response.successResponse(res, null, "OTP sent to phone");
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+  module.exports.verifyPhoneOtp = asyncHandler(async (req, res) => {
+    try {
+      const { countryCode, mobile, otp } = req.body;
+      const userId = req.userId;
+  
+      if (!countryCode || !mobile || !otp) {
+        return res.status(400).json({ message: 'Country code, mobile, and OTP are required' });
+      }
+  
+      // Check if user exists
+      const user = await userDB.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Verify OTP
+      const otpEntry = await otpDB.findOne({ userId, otp });
+      if (!otpEntry) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
+      }
+  
+      // OTP is valid, delete OTP entry
+      await otpDB.deleteOne({ _id: otpEntry._id });
+  
+      // Update user's phone number
+      user.mobile = mobile;
+      user.countryCode = countryCode;
+      await user.save();
+  
+      response.successResponse(res, user, "Phone number updated successfully");
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });

@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        unique: true,
+        // unique: true,
         trim: true,
         lowercase: true
     },
@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema({
     coverPhoto: {
         type: String,
     },
+    country:{
+        type:String,
+    },
+    countryCode:{
+        type:Number
+    },
     gender: {
         type: String,
         trim: true,
@@ -37,7 +43,7 @@ const userSchema = new mongoose.Schema({
     dob: {
         type: Date,
     },
-    phoneNumber: {
+    mobile: {
         type: String,
         trim: true,
     },

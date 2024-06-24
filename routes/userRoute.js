@@ -13,5 +13,9 @@ router.put("/profilepic", checkUser, upload.single("pic"), user.uploadPicture)
 router.put("/coverpic", checkUser, upload.single("pic"), user.uploadCoverPicture)
 router.put("/update", checkUser,  user.updateUser)
 router.post("/google/login", user.googleLogin)
+router.post("/email/send", checkUser, user.sendEmailOtp)
+router.post("/email/verify", checkUser, user.verifyEmailOtp)
+router.post("/phone/send", checkUser, user.sendPhoneOtp)
+router.post("/phone/verify", checkUser, user.verifyPhoneOtp)
 
 module.exports = router;
