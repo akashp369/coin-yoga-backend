@@ -29,11 +29,11 @@ const userSchema = new mongoose.Schema({
     coverPhoto: {
         type: String,
     },
-    country:{
-        type:String,
+    country: {
+        type: String,
     },
-    countryCode:{
-        type:Number
+    countryCode: {
+        type: Number
     },
     gender: {
         type: String,
@@ -62,20 +62,24 @@ const userSchema = new mongoose.Schema({
         jobTitle: { type: String, trim: true },
         companyName: { type: String, trim: true },
         industry: { type: String, trim: true },
-        workExperience: [{
-            jobTitle: { type: String, trim: true },
-            companyName: { type: String, trim: true },
-            duration: { type: String, trim: true },
-            responsibilities: { type: String, trim: true }
-        }],
-        languagesSpoken: [{ type: String, trim: true }],
+        workExperience: { type: String, trim: true },
+        languagesSpoken: { type: String, trim: true },
+
+        // workExperience: [{
+        //     jobTitle: { type: String, trim: true },
+        //     companyName: { type: String, trim: true },
+        //     duration: { type: String, trim: true },
+        //     responsibilities: { type: String, trim: true }
+        // }],
+        // languagesSpoken: [{ type: String, trim: true }],
     },
     educationalInformation: {
         highestDegreeObtained: { type: String, trim: true },
         universityCollegeName: { type: String, trim: true },
         fieldOfStudy: { type: String, trim: true },
         graduationYear: { type: Number },
-        additionalCoursesCertifications: [{ type: String, trim: true }]
+        additionalCoursesCertifications: { type: String, trim: true },
+        // additionalCoursesCertifications: [{ type: String, trim: true }]
     },
     socialMediaLinks: {
         linkedInProfile: { type: String, trim: true },
@@ -85,11 +89,16 @@ const userSchema = new mongoose.Schema({
         personalWebsiteBlog: { type: String, trim: true }
     },
     personalInterestsHobbies: {
-        hobbies: [{ type: String, trim: true }],
-        favoriteBooks: [{ type: String, trim: true }],
-        favoriteMovies: [{ type: String, trim: true }],
-        favoriteMusic: [{ type: String, trim: true }],
-        sportsActivities: [{ type: String, trim: true }]
+        // hobbies: [{ type: String, trim: true }],
+        // favoriteBooks: [{ type: String, trim: true }],
+        // favoriteMovies: [{ type: String, trim: true }],
+        // favoriteMusic: [{ type: String, trim: true }],
+        // sportsActivities: [{ type: String, trim: true }]
+        hobbies: { type: String, trim: true },
+        favoriteBooks: { type: String, trim: true },
+        favoriteMovies: { type: String, trim: true },
+        favoriteMusic: { type: String, trim: true },
+        sportsActivities: { type: String, trim: true },
     },
     preferences: {
         preferredLanguage: { type: String, trim: true },
@@ -107,12 +116,18 @@ const userSchema = new mongoose.Schema({
         emergencyContactEmail: { type: String, trim: true, lowercase: true }
     },
     otherDetails: {
+        // biographyAboutMe: { type: String, trim: true },
+        // mottoOrQuote: { type: String, trim: true },
+        // achievements: [{ type: String, trim: true }],
+        // volunteerExperience: [{ type: String, trim: true }],
+        // membershipInOrganizations: [{ type: String, trim: true }],
+        // favoriteQuotes: [{ type: String, trim: true }]
         biographyAboutMe: { type: String, trim: true },
         mottoOrQuote: { type: String, trim: true },
-        achievements: [{ type: String, trim: true }],
-        volunteerExperience: [{ type: String, trim: true }],
-        membershipInOrganizations: [{ type: String, trim: true }],
-        favoriteQuotes: [{ type: String, trim: true }]
+        achievements: { type: String, trim: true },
+        volunteerExperience: { type: String, trim: true },
+        membershipInOrganizations: { type: String, trim: true },
+        favoriteQuotes: { type: String, trim: true },
     },
     customFields: {
         customField1: { type: String, trim: true },
