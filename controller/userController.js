@@ -197,7 +197,7 @@ module.exports.hangleLogout = asyncHandler(async (req, res) => {
     res.cookie('userToken', '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'None',
         expires: new Date(0) // Set the expiration date to the past
     });
     res.status(200).send({ message: 'Logged out' });
