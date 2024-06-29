@@ -11,6 +11,7 @@ const adminRoute = require("./routes/adminRoute")
 const userRoute = require("./routes/userRoute")
 const wishlistRoute = require("./routes/wishlistRoute")
 const paperTradingRoute = require("./routes/paperTradingRoute")
+const coinDataRoute = require("./routes/coinDataRoute")
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -35,6 +36,7 @@ app.use("/api/admin", adminRoute)
 app.use("/api/user", userRoute)
 app.use("/api/wishlist", wishlistRoute)
 app.use("/api/paper", paperTradingRoute)
+app.use("/api/data", coinDataRoute)
 
 
 
